@@ -1,44 +1,56 @@
 document.addEventListener("DOMContentLoaded", function() {
-  // Wait for the DOM to be fully loaded before executing the script
+  const grid = document.querySelector('.grid');
 
-  // Fetch the JSON file containing image data
-  fetch('./jokers.json')
-    .then(response => response.json())
-    .then(data => {
-      const grid = document.querySelector('.grid');
+  // Charger le fichier JSON
+  fetch('jokers.json')
+      .then(response => response.json())
+      .then(data => {
+          // Parcourir les données JSON
+          data.forEach(item => {
+              // Créer un conteneur pour chaque image et sa description
+              const container = document.createElement('div');
+              container.classList.add('container');
 
-      // Loop through each item in the JSON data
-      data.forEach(item => {
-        // Create a container for each image and its description
-        const container = document.createElement('div');
-        container.classList.add('container');
+              // Créer l'élément image
+              const image = document.createElement('img');
+              image.src = item.image;
+              image.alt = item.description;
+              image.classList.add('image');
+              container.appendChild(image);
 
-        // Create the image element
-        const image = document.createElement('img');
-        image.src = item.image;
-        image.alt = item.description;
-        image.classList.add('image');
-        container.appendChild(image);
+              // Créer l'élément de description
+              const description = document.createElement('p');
+              description.textContent = item.description;
+              description.classList.add('description');
+              container.appendChild(description);
 
-        // Create the description element
-        const description = document.createElement('p');
-        description.textContent = item.description;
-        description.classList.add('description');
-        container.appendChild(description);
+              // Ajouter le conteneur à la grille
+              grid.appendChild(container);
+          });
 
-        // Add the container to the grid
-        grid.appendChild(container);
+          // Récupérer toutes les descriptions
+          const descriptions = document.querySelectorAll('.description');
 
-        // Add mouseover event listener to show description
-        container.addEventListener('mouseover', function() {
-          description.style.display = 'block';
-        });
+          // Cacher toutes les descriptions par défaut
+          descriptions.forEach(desc => {
+              desc.style.display = 'none';
+          });
 
-        // Add mouseout event listener to hide description
-        container.addEventListener('mouseout', function() {
-          description.style.display = 'none';
-        });
-      });
-    })
-    .catch(error => console.error('Error loading JSON file:', error));
+          // Ajouter des gestionnaires d'événements pour afficher les descriptions au survol
+          grid.addEventListener('mouseover', function(event) {
+              if (event.target.classList.contains('image')) {
+                  const description = event.target.nextElementSibling;
+                  description.style.display = 'block';
+              }
+          });
+
+          // Ajouter des gestionnaires d'événements pour cacher les descriptions lorsque la souris quitte l'image
+          grid.addEventListener('mouseout', function(event) {
+              if (event.target.classList.contains('image')) {
+                  const description = event.target.nextElementSibling;
+                  description.style.display = 'none';
+              }
+          });
+      })
+      .catch(error => console.error('Erreur lors du chargement du fichier JSON:', error));
 });
