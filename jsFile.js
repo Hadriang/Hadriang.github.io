@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const grid = document.querySelector('.grid');
 
   // Charger le fichier JSON
-  fetch('./jokers.json')
+  fetch('jokers.json')
       .then(response => response.json())
       .then(data => {
           // Parcourir les données JSON
@@ -30,11 +30,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
           // Récupérer toutes les descriptions
           const descriptions = document.querySelectorAll('.description');
-
-          // Cacher toutes les descriptions par défaut
-          descriptions.forEach(desc => {
-              desc.style.display = 'none';
-          });
 
           // Ajouter des gestionnaires d'événements pour afficher les descriptions au survol
           grid.addEventListener('mouseover', function(event) {
