@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const grid = document.querySelector('.grid');
 
   // Charger le fichier JSON
-  fetch('jokers.json')
+  fetch('./jokers.json')
       .then(response => response.json())
       .then(data => {
           // Parcourir les données JSON
