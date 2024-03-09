@@ -1,0 +1,119 @@
+@font-face {
+  font-family: 'balatro';
+  src: url('balatro.woff2') format('woff2'),
+      url('balatro.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.invisible-block {
+  height: 85px; /* Ajustez la hauteur selon la hauteur de votre barre de navigation */
+}
+
+/* Scroll bar style*/
+/* width */
+::-webkit-scrollbar {
+  width: 15px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background-color: #02273c;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background-image: linear-gradient(to bottom, #02273c, #004153, #005b58, #01744b, #c5952c, #ffcd91, #ffcd91, #c5952c, #01744b, #005b58, #004153, #02273c);
+  padding: 20px;
+  font-size: 30px;
+  text-align: center;
+}
+
+body {
+  background-image: url("resources/page_background.png");
+  background-position: center;
+  height: 1000px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-color: #363636;
+  background-attachment: fixed;
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  justify-content: flex-start;
+  padding-left: 1%;
+  max-width: 50%; /* Limite la largeur de la grille à 80% de la largeur de l'écran */
+  margin-right: auto; /* Centre la grille à gauche de l'écran */
+}
+
+
+.topnav {
+  width: 100%;
+  height: 80px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(7.5px);
+  position: fixed;
+  top: 0;
+  z-index: 9999;
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 30px 50px;
+  line-height: 1;
+  text-decoration: none;
+  font-size: 20px;
+  height: 80px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.topnav a.active {
+  background-color: #00000050;
+  color: white;
+}
+
+.logo{
+  width: auto;
+  height: 60px;
+  float: left;
+  display: inline-block;
+  vertical-align: top;
+  margin: 10px;
+  padding-left: 1%;
+}
+
+.container {
+  position: relative;
+  text-align: center;
+  margin: 4px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Ajouter un effet de fondu sur les images survolées */
+.container .image {
+  transition: opacity 0.3s ease; /* Ajouter une transition pour un fondu en douceur */
+}
+
+.container:hover .image {
+  opacity: 0.7; /* Réduire l'opacité des images survolées */
+}
