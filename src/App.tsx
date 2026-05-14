@@ -18,7 +18,7 @@ import {
   X
 } from "lucide-react";
 import { type ComponentType, type KeyboardEvent, type MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { aggregateHardware, type SortKey } from "./lib/aggregate";
+import { aggregateHardware, summarizeHardware, type SortKey } from "./lib/aggregate";
 import { getBrandForProduct, type BrandInfo } from "./lib/brands";
 import { categories, getCategoryByRoute } from "./lib/categories";
 import { getCountryDisplay } from "./lib/countries";
@@ -602,6 +602,7 @@ function GamePicker({
   onSnapshotLoaded: (slug: string, loadedSnapshot: GameSnapshot) => void;
 }) {
   const [homeError, setHomeError] = useState<string | null>(null);
+  const [hoveredCoverage, setHoveredCoverage] = useState<{ row: HardwareSlot; column: string } | null>(null);
   const availableGames = useMemo(() => games.filter((game) => game.available), []);
   const allSnapshots = availableGames
     .map((game) => snapshots[game.slug])
@@ -614,12 +615,22 @@ function GamePicker({
 
     return new Date(snapshot.metadata.scrapedAt) > new Date(latest.metadata.scrapedAt) ? snapshot : latest;
   }, undefined);
-  const categoryCoverage = categories.map((category) => ({
+  const coverageRows = categories.map((category) => ({
     ...category,
-    known: allSnapshots.reduce(
-      (total, snapshot) => total + snapshot.players.filter((player) => Boolean(player.gear[category.slot]?.name)).length,
-      0
-    )
+    cells: availableGames.map((game) => {
+      const snapshot = snapshots[game.slug];
+      const summary = snapshot ? summarizeHardware(snapshot, category.slot) : undefined;
+      const modelTotal = Math.max(summary?.exactModelCount ?? 0, 1);
+      const playerTotal = Math.max(summary?.totalPlayers ?? 0, 1);
+
+      return {
+        game,
+        modelTotal,
+        playerTotal,
+        summary,
+        loaded: Boolean(snapshot)
+      };
+    })
   }));
 
   useEffect(() => {
@@ -661,9 +672,10 @@ function GamePicker({
           </p>
         </div>
         <div className="snapshot-strip">
-          <Metric label="Players" value={allSnapshots.length === 0 ? "Loading" : totalRows.toLocaleString()} hint="Total player rows across all current data snapshots." />
+          <Metric label="Players" value={allSnapshots.length === 0 ? "Loading" : totalRows.toLocaleString()} hint="Total listed players across all current data snapshots." />
           <Metric label="Gear Types" value={categories.length.toString()} hint="Hardware categories tracked across the site." />
           <Metric label="Updated" value={latestSnapshot ? formatDate(latestSnapshot.metadata.scrapedAt) : "Loading"} hint="Most recent data snapshot date." />
+          <CoverageLegend />
         </div>
       </section>
 
@@ -701,28 +713,131 @@ function GamePicker({
               : `${allSnapshots.length}/${availableGames.length} loaded`}
           </span>
         </div>
-        <div className="coverage-list">
-          {categoryCoverage.map((category) => {
-            const Icon = category.icon;
-            const percent = totalRows === 0 ? 0 : (category.known / totalRows) * 100;
-            return (
-              <button
-                key={category.slot}
-                className="coverage-row"
-                type="button"
-                onClick={() => navigate(`/cs2/${category.route}`)}
-              >
-                <span className="coverage-label">
-                  <Icon size={18} />
-                  {category.label}
-                </span>
-                <span className="coverage-bar" aria-hidden="true">
-                  <span style={{ width: `${percent}%` }} />
-                </span>
-                <span className="coverage-count">{category.known.toLocaleString()}</span>
-              </button>
-            );
-          })}
+        <div className="coverage-table-wrap">
+          <table className="coverage-table">
+            <thead>
+              <tr>
+                <th scope="col">Gear</th>
+                {availableGames.map((game) => {
+                  const snapshot = snapshots[game.slug];
+                  const isColumnHovered = hoveredCoverage?.column === game.slug;
+
+                  return (
+                    <th key={game.slug} scope="col" className={isColumnHovered ? "is-column-hovered" : undefined}>
+                      <span className="coverage-game-head">
+                        <span>
+                          <GameIcon game={game} size={16} />
+                          {game.shortName}
+                        </span>
+                        <small>{snapshot ? `${snapshot.metadata.rowCount.toLocaleString()} players` : "Loading"}</small>
+                      </span>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {coverageRows.map((category) => {
+                const Icon = category.icon;
+                const isRowHovered = hoveredCoverage?.row === category.slot;
+
+                return (
+                  <tr key={category.slot} className={isRowHovered ? "is-row-hovered" : undefined}>
+                    <th scope="row">
+                      <span className="coverage-label">
+                        <Icon size={18} />
+                        {category.label}
+                      </span>
+                    </th>
+                    {category.cells.map(({ game, modelTotal, playerTotal, summary, loaded }) => {
+                      const path = `/${game.slug}/${category.route}`;
+                      const countLabel = summary
+                        ? `${summary.exactModelCount.toLocaleString()} exact models, ${summary.modelCount.toLocaleString()} grouped models, ${summary.collapsedModelCount.toLocaleString()} collapsed variants, ${summary.knownPlayers.toLocaleString()} known, ${summary.unknownPlayers.toLocaleString()} missing`
+                        : "loading data";
+                      const isColumnHovered = hoveredCoverage?.column === game.slug;
+                      const isCellHovered = isRowHovered && isColumnHovered;
+
+                      return (
+                        <td
+                          key={game.slug}
+                          className={`${isColumnHovered ? "is-column-hovered" : ""} ${isCellHovered ? "is-cell-hovered" : ""}`}
+                        >
+                          <a
+                            className={`coverage-cell ${loaded ? "" : "is-loading"}`}
+                            href={toAppPath(path)}
+                            onClick={(event) => handleInternalLink(event, path)}
+                            onFocus={() => setHoveredCoverage({ row: category.slot, column: game.slug })}
+                            onBlur={() => setHoveredCoverage(null)}
+                            onMouseEnter={() => setHoveredCoverage({ row: category.slot, column: game.slug })}
+                            onMouseLeave={() => setHoveredCoverage(null)}
+                            aria-label={`${game.name} ${category.label}: ${countLabel}`}
+                          >
+                            <span className="coverage-cell-metrics">
+                              <span className="coverage-mini-metric is-models">
+                                <strong className="model-count-split">
+                                  {loaded ? (
+                                    <>
+                                      <span className="model-count-grouped">
+                                        {(summary?.modelCount ?? 0).toLocaleString()}
+                                      </span>
+                                      <span className="metric-count-plus">+</span>
+                                      <span className="model-count-collapsed">
+                                        {(summary?.collapsedModelCount ?? 0).toLocaleString()}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    "..."
+                                  )}
+                                </strong>
+                                <span className="coverage-mini-bar is-split" aria-hidden="true">
+                                  <span
+                                    className="model-grouped-segment"
+                                    style={{ width: loaded ? `${((summary?.modelCount ?? 0) / modelTotal) * 100}%` : "0%" }}
+                                  />
+                                  <span
+                                    className="model-collapsed-segment"
+                                    style={{ width: loaded ? `${((summary?.collapsedModelCount ?? 0) / modelTotal) * 100}%` : "0%" }}
+                                  />
+                                </span>
+                              </span>
+
+                              <span className="coverage-mini-metric is-players">
+                                <strong className="player-count-split">
+                                  {loaded ? (
+                                    <>
+                                      <span className="player-count-known">
+                                        {(summary?.knownPlayers ?? 0).toLocaleString()}
+                                      </span>
+                                      <span className="metric-count-separator">/</span>
+                                      <span className="player-count-missing">
+                                        {(summary?.unknownPlayers ?? 0).toLocaleString()}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    "..."
+                                  )}
+                                </strong>
+                                <span className="coverage-mini-bar is-split" aria-hidden="true">
+                                  <span
+                                    className="player-known-segment"
+                                    style={{ width: loaded ? `${((summary?.knownPlayers ?? 0) / playerTotal) * 100}%` : "0%" }}
+                                  />
+                                  <span
+                                    className="player-missing-segment"
+                                    style={{ width: loaded ? `${((summary?.unknownPlayers ?? 0) / playerTotal) * 100}%` : "0%" }}
+                                  />
+                                </span>
+                              </span>
+                            </span>
+                          </a>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </section>
     </>
@@ -731,7 +846,27 @@ function GamePicker({
 
 function getGameStatus(game: GameNavItem, snapshots: SnapshotMap): string {
   const snapshot = snapshots[game.slug];
-  return snapshot ? `${snapshot.metadata.rowCount.toLocaleString()} rows` : "Loading data";
+  return snapshot ? `${snapshot.metadata.rowCount.toLocaleString()} players` : "Loading data";
+}
+
+function CoverageLegend() {
+  const items = [
+    { key: "models", label: "models + variations", description: "blue is grouped models; pink is variations collapsed into those models" },
+    { key: "players", label: "known / missing", description: "green is known players; red is missing players" }
+  ];
+
+  return (
+    <div className="coverage-legend" aria-label="Coverage table legend">
+      <div className="coverage-legend-items">
+        {items.map((item) => (
+          <span key={item.key} className={`coverage-legend-item is-${item.key}`} title={item.description}>
+            <span>{item.label}</span>
+            <span className="coverage-legend-bar" aria-hidden="true" />
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function DataState({ title, message }: { title: string; message: string }) {
@@ -799,8 +934,8 @@ function HardwarePage({ snapshot, activeSlot }: { snapshot: GameSnapshot; active
           <StatusStrip snapshot={snapshot} />
         </div>
         <div className="snapshot-strip compact">
+          <Metric label="Models" value={aggregation.summary.modelCount.toLocaleString()} hint="Grouped model families with at least one listed player for this hardware category." />
           <Metric label="Known" value={aggregation.summary.knownPlayers.toLocaleString()} hint="Players with a listed item for this hardware category." />
-          <Metric label="Unique" value={aggregation.summary.uniqueProducts.toLocaleString()} hint="Different products after the current product display is applied." />
           <Metric label="Missing" value={aggregation.summary.unknownPlayers.toLocaleString()} hint="Players without a listed item for this hardware category." />
         </div>
       </section>
@@ -1098,7 +1233,6 @@ function writeStoredTheme(theme: ThemeMode): void {
   try {
     window.localStorage.setItem(themeStorageKey, theme);
   } catch {
-    // Theme still applies for this session if storage is unavailable.
   }
 }
 

@@ -12,9 +12,9 @@
         var pathParts = window.location.pathname.split("/").filter(Boolean);
         var firstPart = pathParts[0] || "";
         var secondPart = pathParts[1] || "";
-        var isCustomDomainRoute = knownRouteStarts.indexOf(firstPart) >= 0;
-        var isProjectRoute = knownRouteStarts.indexOf(secondPart) >= 0;
-        var basePath = isCustomDomainRoute || !isProjectRoute ? "/" : "/" + firstPart + "/";
+        var isRootRoute = knownRouteStarts.indexOf(firstPart) >= 0;
+        var isProjectPagesRoute = knownRouteStarts.indexOf(secondPart) >= 0;
+        var basePath = isRootRoute || !isProjectPagesRoute ? "/" : "/" + firstPart + "/";
         var routePath = basePath === "/" ? window.location.pathname : "/" + pathParts.slice(1).join("/");
         var target = basePath + "?gh_route=" + encodeURIComponent(routePath || "/");
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateHardware } from "../src/lib/aggregate";
+import { aggregateHardware, summarizeHardware } from "../src/lib/aggregate";
 import type { GameSnapshot } from "../src/types";
 
 const snapshot: GameSnapshot = {
@@ -51,7 +51,9 @@ describe("aggregateHardware", () => {
     expect(result.summary.totalPlayers).toBe(4);
     expect(result.summary.knownPlayers).toBe(3);
     expect(result.summary.unknownPlayers).toBe(1);
-    expect(result.summary.uniqueProducts).toBe(3);
+    expect(result.summary.modelCount).toBe(2);
+    expect(result.summary.exactModelCount).toBe(3);
+    expect(result.summary.collapsedModelCount).toBe(1);
     expect(result.rankings.map((ranking) => ranking.name)).toEqual([
       "Logitech G Pro X Superlight 2 Black",
       "Razer Viper V3 Pro Black",
@@ -63,6 +65,9 @@ describe("aggregateHardware", () => {
   it("groups products through the manual alias rules", () => {
     const result = aggregateHardware(snapshot, "mouse", "grouped");
 
+    expect(result.summary.modelCount).toBe(2);
+    expect(result.summary.exactModelCount).toBe(3);
+    expect(result.summary.collapsedModelCount).toBe(1);
     expect(result.rankings[0]).toMatchObject({
       name: "Razer Viper V3 Pro",
       count: 2,
@@ -79,6 +84,28 @@ describe("aggregateHardware", () => {
     expect(byProduct.rankings).toHaveLength(1);
     expect(byPlayer.rankings[0].name).toBe("Logitech G Pro X Superlight 2 Black");
     expect(byTeam.rankings[0].name).toBe("Razer Viper V3 Pro White");
+  });
+
+  it("keeps model count grouped and independent from search filters", () => {
+    const unfiltered = aggregateHardware(snapshot, "mouse", "exact");
+    const filtered = aggregateHardware(snapshot, "mouse", "exact", "superlight");
+    const summary = summarizeHardware(snapshot, "mouse");
+
+    expect(summary).toMatchObject({
+      totalPlayers: 4,
+      knownPlayers: 3,
+      unknownPlayers: 1,
+      modelCount: 2,
+      exactModelCount: 3,
+      collapsedModelCount: 1
+    });
+    expect(unfiltered.summary.modelCount).toBe(2);
+    expect(unfiltered.summary.exactModelCount).toBe(3);
+    expect(unfiltered.summary.collapsedModelCount).toBe(1);
+    expect(filtered.summary.modelCount).toBe(2);
+    expect(filtered.summary.exactModelCount).toBe(3);
+    expect(filtered.summary.collapsedModelCount).toBe(1);
+    expect(filtered.rankings).toHaveLength(1);
   });
 
   it("orders used-by players by the CS2 HLTV team ranking snapshot", () => {

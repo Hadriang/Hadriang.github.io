@@ -6,11 +6,9 @@ import type { GameSnapshot } from "../src/types";
 
 const requestedSlugs = process.argv.slice(2);
 const slugs = requestedSlugs.length > 0 ? requestedSlugs : Object.keys(proSettingsGames);
-const sourceOutputDir = path.resolve("src/data");
 const publicOutputDir = path.resolve("public/data");
-const outputDirs = [sourceOutputDir, publicOutputDir];
 
-await Promise.all(outputDirs.map((outputDir) => mkdir(outputDir, { recursive: true })));
+await mkdir(publicOutputDir, { recursive: true });
 
 for (const slug of slugs) {
   const config = proSettingsGames[slug];
@@ -31,16 +29,13 @@ for (const slug of slugs) {
 
   const html = await response.text();
   const snapshot = parseProSettingsTable(html, config);
-  const outputPath = path.join(sourceOutputDir, `${slug}.json`);
+  const outputPath = path.join(publicOutputDir, `${slug}.json`);
   const previousSnapshot = await readExistingSnapshot(outputPath);
   const report = compareSnapshots(previousSnapshot, snapshot);
   const serializedSnapshot = `${JSON.stringify(snapshot, null, 2)}\n`;
 
-  await Promise.all(
-    outputDirs.map((outputDir) => writeFile(path.join(outputDir, `${slug}.json`), serializedSnapshot, "utf8"))
-  );
+  await writeFile(outputPath, serializedSnapshot, "utf8");
   console.log(`Wrote ${outputPath} (${snapshot.metadata.rowCount} rows)`);
-  console.log(`Wrote ${path.join(publicOutputDir, `${slug}.json`)} (${snapshot.metadata.rowCount} rows)`);
   console.log("");
   console.log(formatSnapshotChangeReport(report));
 }

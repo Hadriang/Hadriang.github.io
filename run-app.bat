@@ -31,14 +31,14 @@ if not exist "node_modules" (
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $response = Invoke-WebRequest -UseBasicParsing -Uri '%APP_URL%' -TimeoutSec 2; if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>nul
 if not errorlevel 1 (
-  echo Hardware Stats is already running.
+  echo Esport Pro Stuff is already running.
   echo Opening %APP_URL% in your browser.
   start "" "%APP_URL%"
   exit /b 0
 )
 
 echo.
-echo Starting Hardware Stats...
+echo Starting Esport Pro Stuff...
 echo Opening %APP_URL% in your browser.
 echo Press Ctrl+C in this window to stop the server.
 echo.
