@@ -1,0 +1,7 @@
+Esport Pro Stuff is an independent reference site.
+
+Game names, team names, player names, product names, brand names, and logos are used only to identify the games, teams, people, products, and brands being referenced. They remain the property of their respective owners.
+
+Data snapshots are parsed from public ProSettings.net list pages. Source product images and source affiliate links are not copied.
+
+Orbitron is self-hosted and is available under the SIL Open Font License. Inter is used only as a local/system fallback and is available under the SIL Open Font License.

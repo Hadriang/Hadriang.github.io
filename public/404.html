@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting | Esport Pro Stuff</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        var knownRouteStarts = ["privacy", "terms", "disclosure", "cs2", "valorant", "apex-legends", "fortnite"];
+        var pathParts = window.location.pathname.split("/").filter(Boolean);
+        var firstPart = pathParts[0] || "";
+        var secondPart = pathParts[1] || "";
+        var isCustomDomainRoute = knownRouteStarts.indexOf(firstPart) >= 0;
+        var isProjectRoute = knownRouteStarts.indexOf(secondPart) >= 0;
+        var basePath = isCustomDomainRoute || !isProjectRoute ? "/" : "/" + firstPart + "/";
+        var routePath = basePath === "/" ? window.location.pathname : "/" + pathParts.slice(1).join("/");
+        var target = basePath + "?gh_route=" + encodeURIComponent(routePath || "/");
+
+        window.location.replace(target + window.location.search.replace(/^\?/, "&") + window.location.hash);
+      })();
+    </script>
+    <p>Redirecting...</p>
+  </body>
+</html>

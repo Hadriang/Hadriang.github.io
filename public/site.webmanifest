@@ -1,0 +1,17 @@
+{
+  "name": "Esport Pro Stuff",
+  "short_name": "EPS",
+  "description": "Compare pro player gear choices across CS2, VALORANT, Apex Legends, and Fortnite.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#07090b",
+  "theme_color": "#07090b",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
